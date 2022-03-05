@@ -1,0 +1,22 @@
+*****************************
+* Lab 5 Synthesis Questions *
+*****************************
+Name: George Wang, Chairnet Munchen
+ID: 1932032
+
+
+-----------------------------------------------------------
+1) Alignment: 16 bytes
+   Reasoning: I checked malloc(1) to malloc(24), I noticed that after having a break on line 273 (this is where my malloc statement is located) in gdb and entering next to see the addresses: the starting address is 0x4056b0 and the ending address is 0x4056d0, why differs by 32. But after entering malloc(25), the ending address changed to 0x4056e0, which increases by 16 bytes compares to that of malloc(24). Doing the same procedure by trying larger different sizes, i found the block size always increase by 16 bytes. That means the aligment has to be 16 bytes.
+
+
+
+
+
+-----------------------------------------------------------
+2) Boundary Tag Size: 8 bytes
+   Reasoning: When i call malloc(24),the starting address of the allocated block will be 0x4056b0 and the ending address is 0x4056d0.That is a difference of 32 bytes. And then when i call malloc(25), the difference between the starting and ending address increases to 48 bytes, which means the largest payload for a blocksize of 32 bytes will be 24 bytes. The remaining will be the size of boundary tag, which is 32-24=8 bytes.
+
+
+
+-----------------------------------------------------------

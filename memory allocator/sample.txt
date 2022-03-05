@@ -1,0 +1,188 @@
+void* mm_realloc(void* ptr, size_t size) {
+    void *oldptr = ptr;
+    void *newptr;
+    size_t copySize;
+    
+    newptr = mm_malloc(size);
+    if (newptr == NULL)
+      return newptr;
+    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
+    if (size < copySize)
+      copySize = size;
+    memcpy(newptr, oldptr, copySize);
+    mm_free(oldptr);
+    return newptr;
+}
+
+
+void* mm_realloc(void* ptr, size_t size) {
+  // Write your code here ...
+  block_info* current_block;
+  block_info* temp;
+  size_t temp_tag;
+  size_t block_size;
+  size_t req_size;
+
+  size += WORD_SIZE;
+  if (size <= MIN_BLOCK_SIZE) {
+    // Make sure we allocate enough space for a block_info in case we
+    // free this block (when we free this block, we'll need to use the
+    // next pointer, the prev pointer, and the boundary tag).
+    req_size = MIN_BLOCK_SIZE;
+  } else {
+    // Round up for correct alignment
+    req_size = ALIGNMENT * ((size + ALIGNMENT - 1) / ALIGNMENT);
+  }
+  if(ptr == NULL) {
+    return mm_malloc(req_size);
+  } else if(size == 0) {
+    mm_free(ptr);
+    return NULL;
+  } else {
+    current_block = (block_info*)UNSCALED_POINTER_SUB(ptr, WORD_SIZE);
+    temp = mm_malloc(req_size);
+    temp_tag = (temp -> size_and_tags);
+    block_size = SIZE(current_block -> size_and_tags);
+    if (req_size <= block_size) {
+      *temp = *(block_info*)current_block;
+      (current_block -> size_and_tags) = (current_block -> size_and_tags)&~TAG_USED;
+      insert_free_block(current_block);
+      mm_malloc(req_size);
+      (temp -> size_and_tags) = (current_block -> size_and_tags);
+      *current_block = *temp;
+      (temp -> size_and_tags) = temp_tag;
+      mm_free((void*)UNSCALED_POINTER_ADD(temp, WORD_SIZE));
+      return ptr;
+    } else {
+      *temp = *current_block;
+      mm_free(ptr);
+      current_block = (block_info*)UNSCALED_POINTER_SUB(mm_malloc(req_size), WORD_SIZE);
+      (temp -> size_and_tags) = (current_block -> size_and_tags);
+      *current_block = *temp;
+      (temp -> size_and_tags) = temp_tag;
+      mm_free((void*)UNSCALED_POINTER_ADD(temp, WORD_SIZE));
+      }
+  }
+  return (void*)UNSCALED_POINTER_ADD(current_block, WORD_SIZE);
+}
+
+ void* mm_realloc(void* ptr, size_t size) {
+  block_info* old_block;
+  block_info* new_ptr;
+  size_t old_size;
+  size_t new_size;
+  int i;
+
+  if (ptr == NULL) {
+    return mm_malloc(size);
+  }
+
+  if (size == 0) {
+    free(ptr);
+    return NULL;
+  }
+
+  // Add one word for the initial size header.
+  // Note that we don't need to boundary tag when the block is used!
+  size += WORD_SIZE;
+  if (size <= MIN_BLOCK_SIZE) {
+    // Make sure we allocate enough space for a block_info in case we
+    // free this block (when we free this block, we'll need to use the
+    // next pointer, the prev pointer, and the boundary tag).
+    new_size = MIN_BLOCK_SIZE;
+  } else {
+    // Round up for correct alignment
+    new_size = ALIGNMENT * ((size + ALIGNMENT - 1) / ALIGNMENT);
+  }
+
+  old_block = (block_info*) UNSCALED_POINTER_SUB(ptr, WORD_SIZE);
+  old_size = SIZE(old_block->size_and_tags) - WORD_SIZE;
+
+  if (new_size > old_size) {
+    new_ptr = mm_malloc(size);
+    //block_info* new_block = (block_info*) UNSCALED_POINTER_SUB(new_ptr, WORD_SIZE);
+    //for (i = 0; i < old_size; i+=WORD_SIZE) {
+      //*((block_info*)UNSCALED_POINTER_ADD(new_ptr, i)) = *((block_info*)UNSCALED_POINTER_ADD(ptr, i));
+      //coalesce_free_block((block_info*)ptr);
+    //}
+    char* cnptr = (char*)new_ptr;
+    char* cptr = (char*)ptr;
+    for (i=0; i < old_size; i++) {
+      if (cnptr[i] > cptr[i]) {
+	cnptr[i] = 0;
+      } else if (cnptr[i] < cptr[i]) {
+	cnptr[i] = 1;
+      }
+    }  
+    mm_free(ptr);
+    return new_ptr;
+  } else {
+    old_block->size_and_tags += new_size - old_size - WORD_SIZE;
+    return ptr;
+  }
+}
+
+
+
+
+
+
+#include "mm.c"
+#include "string.h"
+
+// Extra credit.
+void* mm_realloc(void* ptr, size_t size) {
+  // Write your code here ...
+  block_info* current_block;
+  void* temp;
+  // size_t temp_tag;
+  size_t block_size;
+  size_t req_size;
+
+  size += WORD_SIZE;
+  if (size <= MIN_BLOCK_SIZE) {
+    // Make sure we allocate enough space for a block_info in case we
+    // free this block (when we free this block, we'll need to use the
+    // next pointer, the prev pointer, and the boundary tag).
+    req_size = MIN_BLOCK_SIZE;
+  } else {
+    // Round up for correct alignment
+    req_size = ALIGNMENT * ((size + ALIGNMENT - 1) / ALIGNMENT);
+  }
+  if(ptr == NULL) {
+    return mm_malloc(size);
+  } else if(size == 0) {
+    mm_free(ptr);
+    return NULL;
+  } else {
+    current_block = (block_info*)UNSCALED_POINTER_SUB(ptr, WORD_SIZE);
+    block_size = SIZE(current_block -> size_and_tags);
+    // free(ptr);
+    temp = mm_malloc(size);
+    if (req_size <= block_size) {
+      //char* ctemp = (char*)temp;
+      //char* ccurr = (char*)ptr;
+      //for(int i = 0; i < req_size - WORD_SIZE; i++ ) {
+      //ctemp[i] = ccurr[i];
+      //}
+      memcpy(temp, ptr, req_size);
+      mm_free(ptr);
+      return (void*)temp;
+    } else {
+      //char* ctemp = (char*)temp;
+      //char* ccurr = (char*)ptr;
+      //for(int i = 0; i < block_size - WORD_SIZE; i++ ) {
+      //ctemp[i] = ccurr[i];
+      //}
+      memcpy(temp, ptr, block_size);
+      //(temp -> size_and_tags) = (current_block -> size_and_tags);
+      //*current_block = *temp;
+      //(temp -> size_and_tags) = temp_tag;
+      //mm_free((void*)UNSCALED_POINTER_ADD(temp, WORD_SIZE));
+      mm_free(ptr);
+    }
+  }
+  return (void*)temp;
+}
+
+
